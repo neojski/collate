@@ -184,6 +184,7 @@ describe('indexableString', function () {
       '100',
       '2',
       '20',
+      '[]',
       //'é',
       'foo',
       'mo',
