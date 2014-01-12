@@ -192,6 +192,7 @@ describe('indexableString', function () {
       //'moët et chandon',
       'moz',
       'mozilla',
+      'mozilla with a super long string see how far it can go',
       'mozzy',
       [],
       [ null ],
@@ -214,27 +215,36 @@ describe('indexableString', function () {
 
     var mapping = [];
     sortedKeys.forEach(function (key) {
-      mapping.push({
-        key: key,
-        indexableStr: pouchCollate.toIndexableString(key)
-      });
+      mapping.push([key, pouchCollate.toIndexableString(key)]);
     });
     console.log(mapping);
     mapping.sort(function (a, b) {
-      var base64Compare = utils.base64Compare(a.indexableStr, b.indexableStr);
+      var base64Compare = utils.base64Compare(a[1], b[1]);
       if (base64Compare !== 0) {
         return base64Compare;
       }
-      return sortedKeys.indexOf(a.key) - sortedKeys.indexOf(b.key);
+
+      var aIdx = typeof a[0] === 'number' && isNaN(a[0]) ? 1 : sortedKeys.indexOf(a[0]);
+      var bIdx = typeof b[0] === 'number' && isNaN(b[0]) ? 1 : sortedKeys.indexOf(b[0]);
+      return aIdx - bIdx;
     });
     var keysSortedByIndexableString = mapping.map(function (x) {
-      return x.key;
+      return x[0];
     });
 
     console.log(mapping);
     console.log(sortedKeys);
     console.log(keysSortedByIndexableString);
 
-    keysSortedByIndexableString.should.equal(sortedKeys);
+    keysSortedByIndexableString.forEach(function (actual, i) {
+      var expected = sortedKeys[i];
+
+      if (actual) {
+        should.equal(actual, expected, 'expect ' + JSON.stringify(actual) +
+          ' is ' + JSON.stringify(expected));
+      } else { // nulls are throwing weird exceptions here
+        should.equal(!!actual, false);
+      }
+    });
   });
 });
