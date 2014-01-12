@@ -4,6 +4,7 @@ var should = require('chai').should();
 var pouchCollate = require('../lib');
 var collate = pouchCollate.collate;
 var normalizeKey = pouchCollate.normalizeKey;
+var utils = require('../lib/utils');
 
 describe('collate', function () {
   var a = {
@@ -84,29 +85,25 @@ describe('collate', function () {
     collate(b.object, a.object).should.equal(1);
     collate(c.object, b.object).should.equal(-1);
     collate(b.object, c.object).should.equal(1);
-    collate(c.object, a.object).should.equal(-2);
-    collate(a.object, c.object).should.equal(2);
+    collate(c.object, a.object).should.be.below(0);
+    collate(a.object, c.object).should.be.above(0);
   });
   it('objects differing only in num of keys', function () {
     collate({1: 1}, {1: 1, 2: 2}).should.equal(-1);
     collate({1: 1, 2: 2}, {1: 1}).should.equal(1);
   });
   it('compare number to null', function () {
-    collate(a.number, null).should.equal(2);
+    collate(a.number, null).should.be.above(0);
   });
   it('compare number to function', function () {
     collate(a.number, function () {
-    }).should.not.equal(collate(a.number, function () {
-    }));
+    }).should.not.equal(collate(a.number, function () {}));
     collate(b.number, function () {
-    }).should.not.equal(collate(b.number, function () {
-    }));
+    }).should.not.equal(collate(b.number, function () {}));
     collate(function () {
-    }, a.number).should.not.equal(collate(function () {
-    }, a.number));
+    }, a.number).should.not.equal(collate(function () {}, a.number));
     collate(function () {
-    }, b.number).should.not.equal(collate(function () {
-    }, b.number));
+    }, b.number).should.not.equal(collate(function () {}, b.number));
   });
 });
 
@@ -133,11 +130,111 @@ describe('normalizeKey', function () {
       var original = normalization[0];
       var expected = normalization[1];
       var normalized = normalizeKey(original);
-      
+
       var message = 'check normalization of ' + JSON.stringify(original) +
         ' to ' + JSON.stringify(expected) +
         ', got ' + JSON.stringify(normalized);
       should.equal(normalized, expected, message);
     });
+  });
+});
+
+describe('indexableString', function () {
+
+  it('verify toIndexableString()', function () {
+
+    // these keys were ordered by CouchDB itself;
+    // I tested with a simple view
+    var sortedKeys = [
+      undefined,
+      NaN,
+      -Infinity,
+      Infinity,
+      null,
+      false,
+      true,
+      -utils.maxInt,
+      -300,
+      -200,
+      -100,
+      -10,
+      -2.5,
+      -2,
+      -1.5,
+      -1,
+      -0.5,
+      -0.0001,
+      0,
+      0.0001,
+      0.1,
+      0.5,
+      1,
+      1.5,
+      2,
+      3,
+      10,
+      15,
+      100,
+      200,
+      300,
+      utils.maxInt,
+      '',
+      '1',
+      '10',
+      '100',
+      '2',
+      '20',
+      //'é',
+      'foo',
+      'mo',
+      'moe',
+      //'moé',
+      //'moët et chandon',
+      'moz',
+      'mozilla',
+      'mozzy',
+      [],
+      [ null ],
+      [ null, null ],
+      [ null, 'foo' ],
+      [ false ],
+      [ false, 100 ],
+      [ true ],
+      [ true, 100 ],
+      [ 0 ],
+      [ 0, null ],
+      [ 0, 1 ],
+      [ 0, '' ],
+      [ 0, 'foo' ],
+      [ '', '' ],
+      [ 'foo' ],
+      [ 'foo', 1 ],
+      {}
+    ];
+
+    var mapping = [];
+    sortedKeys.forEach(function (key) {
+      mapping.push({
+        key: key,
+        indexableStr: pouchCollate.toIndexableString(key)
+      });
+    });
+    console.log(mapping);
+    mapping.sort(function (a, b) {
+      var base64Compare = utils.base64Compare(a.indexableStr, b.indexableStr);
+      if (base64Compare !== 0) {
+        return base64Compare;
+      }
+      return sortedKeys.indexOf(a.key) - sortedKeys.indexOf(b.key);
+    });
+    var keysSortedByIndexableString = mapping.map(function (x) {
+      return x.key;
+    });
+
+    console.log(mapping);
+    console.log(sortedKeys);
+    console.log(keysSortedByIndexableString);
+
+    keysSortedByIndexableString.should.equal(sortedKeys);
   });
 });
