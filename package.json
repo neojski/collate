@@ -21,9 +21,6 @@
   "bugs": {
     "url": "https://github.com/pouchdb/collate/issues"
   },
-  "dependencies" : {
-    "btoa" : "~1.1.1"
-  },
   "devDependencies": {
     "chai": "~1.8.1",
     "mocha": "~1.15.1",

@@ -141,19 +141,36 @@ describe('normalizeKey', function () {
 
 describe('indexableString', function () {
 
+  it('verify intToDecimalForm', function () {
+    utils.intToDecimalForm(0).should.equal('0');
+    utils.intToDecimalForm(Number.MIN_VALUE).should.equal('0');
+    utils.intToDecimalForm(-Number.MIN_VALUE).should.equal('0');
+
+    var maxValueStr = '1797693134862316800886484642206468426866682428440286464' +
+      '42228680066046004606080400844208228060084840044686866242482868202680268' +
+      '82040288406280040662242886466688240606642242682208668042640440204020242' +
+      '48802248082808208888442866208026644060866608420408868240026826626668642' +
+      '46642840408646468824200860804260804068888';
+
+    utils.intToDecimalForm(Number.MAX_VALUE).should.equal(maxValueStr);
+    utils.intToDecimalForm(-Number.MAX_VALUE).should.equal('-' + maxValueStr);
+
+    var simpleNums = [-3000, 3000, 322, 2308, -32, -1, 0, 1, 2, -2, -10, 10, -100, 100];
+
+    simpleNums.forEach(function (simpleNum) {
+      utils.intToDecimalForm(simpleNum).should.equal(simpleNum.toString());
+    });
+  });
+
   it('verify toIndexableString()', function () {
 
     // these keys were ordered by CouchDB itself;
     // I tested with a simple view
     var sortedKeys = [
-      undefined,
-      NaN,
-      -Infinity,
-      Infinity,
       null,
       false,
       true,
-      -utils.maxInt,
+      -Number.MAX_VALUE,
       -300,
       -200,
       -100,
@@ -164,7 +181,9 @@ describe('indexableString', function () {
       -1,
       -0.5,
       -0.0001,
+      -Number.MIN_VALUE,
       0,
+      Number.MIN_VALUE,
       0.0001,
       0.1,
       0.5,
@@ -177,7 +196,7 @@ describe('indexableString', function () {
       100,
       200,
       300,
-      utils.maxInt,
+      Number.MAX_VALUE,
       '',
       '1',
       '10',
@@ -220,14 +239,7 @@ describe('indexableString', function () {
     });
     console.log(mapping);
     mapping.sort(function (a, b) {
-      var base64Compare = utils.base64Compare(a[1], b[1]);
-      if (base64Compare !== 0) {
-        return base64Compare;
-      }
-
-      var aIdx = typeof a[0] === 'number' && isNaN(a[0]) ? 1 : sortedKeys.indexOf(a[0]);
-      var bIdx = typeof b[0] === 'number' && isNaN(b[0]) ? 1 : sortedKeys.indexOf(b[0]);
-      return aIdx - bIdx;
+      return utils.stringLexCompare(a[1], b[1]);
     });
     var keysSortedByIndexableString = mapping.map(function (x) {
       return x[0];
