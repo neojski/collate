@@ -230,7 +230,22 @@ describe('indexableString', function () {
       [ '', '' ],
       [ 'foo' ],
       [ 'foo', 1 ],
-      {}
+      {},
+      { '0': null },
+      { '0': false },
+      { '0': true },
+      { '0': 0 },
+      { '0': 1 },
+      { '0': 'bar' },
+      { '0': 'foo' },
+      { '0': 'foo', '1': false },
+      { '0': 'foo', '1': true },
+      { '0': 'foo', '1': 0 },
+      { '0': 'foo', '1': '0' },
+      { '0': 'foo', '1': 'bar' },
+      { '0': 'quux' },
+      { '1': 'foo' }
+      //{ '1': 'foo', '0' : 'foo' } // key order actually matters, but node sorts them
     ];
 
     var mapping = [];
