@@ -252,7 +252,6 @@ describe('indexableString', function () {
     sortedKeys.forEach(function (key) {
       mapping.push([key, pouchCollate.toIndexableString(key)]);
     });
-    console.log(mapping);
     mapping.sort(function (a, b) {
       return utils.stringLexCompare(a[1], b[1]);
     });
@@ -261,8 +260,6 @@ describe('indexableString', function () {
     });
 
     console.log(mapping);
-    console.log(sortedKeys);
-    console.log(keysSortedByIndexableString);
 
     keysSortedByIndexableString.forEach(function (actual, i) {
       var expected = sortedKeys[i];
