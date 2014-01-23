@@ -6,6 +6,24 @@ var collate = pouchCollate.collate;
 var normalizeKey = pouchCollate.normalizeKey;
 var utils = require('../lib/utils');
 
+var verifyLexicalKeysSort = function (keys) {
+  var lexical = keys.map(function (key) {
+    return [key, pouchCollate.toIndexableString(key)];
+  });
+  lexical.sort(function (a, b) {
+    return utils.stringLexCompare(a[1], b[1]);
+  });
+  keys.sort(pouchCollate.collate);
+
+  keys.forEach(function (expected, i) {
+    var actual = lexical[i][0];
+
+    should.equal(actual, expected, 'expect ' + JSON.stringify(actual) +
+        ' is ' + JSON.stringify(expected));
+  });
+};
+
+
 describe('collate', function () {
   var a = {
     array: [1, 2, 3],
@@ -163,10 +181,7 @@ describe('indexableString', function () {
   });
 
   it('verify toIndexableString()', function () {
-
-    // these keys were ordered by CouchDB itself;
-    // I tested with a simple view
-    var sortedKeys = [
+    var keys = [
       null,
       false,
       true,
@@ -247,29 +262,14 @@ describe('indexableString', function () {
       { '1': 'foo' }
       //{ '1': 'foo', '0' : 'foo' } // key order actually matters, but node sorts them
     ];
+    verifyLexicalKeysSort(keys);
+  });
 
-    var mapping = [];
-    sortedKeys.forEach(function (key) {
-      mapping.push([key, pouchCollate.toIndexableString(key)]);
-    });
-    mapping.sort(function (a, b) {
-      return utils.stringLexCompare(a[1], b[1]);
-    });
-    var keysSortedByIndexableString = mapping.map(function (x) {
-      return x[0];
-    });
-
-    console.log(mapping);
-
-    keysSortedByIndexableString.forEach(function (actual, i) {
-      var expected = sortedKeys[i];
-
-      if (actual) {
-        should.equal(actual, expected, 'expect ' + JSON.stringify(actual) +
-          ' is ' + JSON.stringify(expected));
-      } else { // nulls are throwing weird exceptions here
-        should.equal(!!actual, false);
-      }
-    });
+  it('verify toIndexableString()', function () {
+    var keys = [
+      ['test', 'test'],
+      ['test\u0000']
+    ];
+    verifyLexicalKeysSort(keys);
   });
 });
